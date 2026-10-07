@@ -84,6 +84,9 @@
         font-size:11px; letter-spacing:.62em; text-indent:.62em; color:var(--txt-dim);
         text-transform:uppercase;
     }
+    #loader.ready {
+    cursor: pointer;
+}
     #loader .title{
         font-size:clamp(20px,4.4vw,34px); letter-spacing:.44em; text-indent:.44em;
         background:linear-gradient(90deg,#ffd7a1,#d8aaff 55%,#8fd4ff);
@@ -225,7 +228,7 @@
 
 <div id="loader">
     <div id="bar"><i></i></div>
-    <div class="sub" id="loadMsg">booting stellar engine</div>
+    <div class="sub" id="loadMsg">click here to run</div>
 </div>
 
 <div id="grade"></div>
@@ -2046,13 +2049,19 @@ function boot(index) {
             renderer.compile(scene, camera);
         } catch (err) { /* shader warm-up failure is non fatal */ }
         dom.loadBar.style.width = '100%';
-        dom.loadMsg.textContent = 'entering orbit';
-        setTimeout(() => {
-            dom.loader.classList.add('done');
-            setTimeout(() => { dom.loader.style.display = 'none'; }, 1200);
-            state.lastInteraction = performance.now();
-            state.lastPointerMove = performance.now();
-        }, 320);
+        dom.loadMsg.textContent = 'click here to run';
+        dom.loader.classList.add('ready');
+
+dom.loader.addEventListener('click', () => {
+    dom.loader.classList.add('done');
+    
+    setTimeout(() => {
+        dom.loader.style.display = 'none';
+    }, 1200);
+    
+    state.lastInteraction = performance.now();
+    state.lastPointerMove = performance.now();
+}, { once: true });
         clock.start();
         renderer.setAnimationLoop(() => {
             try { animate(); }
@@ -2085,5 +2094,44 @@ syncUI();
 boot(0);
 
 </script>
+
+<audio id="bgMusic" preload="auto"></audio>
+
+<script>
+    const songs = [
+        "playable/ThinkingOutLoud.mp3",
+        "playable/ShapeOfYou.mp3",
+        "playable/Perfect.mp3"
+    ];
+
+    const music = document.getElementById("bgMusic");
+    let currentSong = 0;
+
+    function playNextSong() {
+        music.src = songs[currentSong];
+        music.play().catch(() => {
+            // Browser blocked autoplay — wait for user interaction
+        });
+
+        currentSong = (currentSong + 1) % songs.length;
+    }
+
+    music.addEventListener("ended", playNextSong);
+
+    // Pre-loader: 1.1 seconds
+    // Start music 0.1s before it ends = 1.0 second
+    setTimeout(() => {
+        playNextSong();
+    }, 1000);
+
+    // If autoplay was blocked, start after the user's first interaction
+    document.addEventListener("click", () => {
+        if (music.paused) {
+            playNextSong();
+        }
+    }, { once: true });
+</script>
+
+
 </body>
 </html>
